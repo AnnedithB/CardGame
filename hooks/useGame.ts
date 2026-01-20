@@ -32,7 +32,7 @@ export function useGame() {
       const newDeck = [...prev.deck];
       const pickedCard = newDeck.pop()!;
 
-      // Immediately show card and start animation sequence
+      // Show card immediately in center, then flip
       setGame({
         ...prev,
         deck: newDeck,
@@ -41,7 +41,7 @@ export function useGame() {
         state: 'waiting',
       });
 
-      // Slide to center, then flip
+      // Start flip animation after a brief delay
       setTimeout(() => {
         setGame((p) => {
           if (p.currentCard?.id === pickedCard.id) {
@@ -52,21 +52,21 @@ export function useGame() {
           }
           return p;
         });
+      }, 300);
 
-        // Reveal after flip
-        setTimeout(() => {
-          setGame((p) => {
-            if (p.currentCard?.id === pickedCard.id) {
-              return {
-                ...p,
-                cardAnimation: 'revealed',
-                state: 'card-revealed',
-              };
-            }
-            return p;
-          });
-        }, 600);
-      }, 500);
+      // Reveal after flip completes
+      setTimeout(() => {
+        setGame((p) => {
+          if (p.currentCard?.id === pickedCard.id) {
+            return {
+              ...p,
+              cardAnimation: 'revealed',
+              state: 'card-revealed',
+            };
+          }
+          return p;
+        });
+      }, 900);
 
       return prev;
     });

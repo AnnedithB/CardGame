@@ -74,7 +74,7 @@ export default function Home() {
                 </GameButton>
               </div>
             ) : game.currentCard ? (
-              <div className="w-full max-w-[280px] space-y-2">
+              <div className="w-full max-w-[280px] space-y-2" key={game.currentCard.id}>
                 <Card 
                   card={game.currentCard} 
                   isRevealed={game.cardAnimation === 'revealed' || game.cardAnimation === 'flipping'}

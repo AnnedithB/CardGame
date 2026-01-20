@@ -34,13 +34,14 @@ export default function Card({
         return 'translateX(calc(50vw - 10rem)) scale(0.6)';
       case 'idle':
       default:
-        return 'translateX(calc(-50vw + 10rem)) scale(0.6)';
+        // Start from left, but make it visible
+        return 'translateX(0) scale(1)';
     }
   };
 
   const getOpacity = () => {
     if (animationState === 'sliding-to-discard') return 0.3;
-    if (animationState === 'idle') return 0;
+    // Always show card when it exists (not idle)
     return 1;
   };
 
