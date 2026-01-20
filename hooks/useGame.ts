@@ -32,37 +32,41 @@ export function useGame() {
       const newDeck = [...prev.deck];
       const pickedCard = newDeck.pop()!;
 
-      // Start with card at left position
-      setGame((p) => ({
-        ...p,
+      // Immediately show card and start animation sequence
+      setGame({
+        ...prev,
         deck: newDeck,
         currentCard: pickedCard,
-        cardAnimation: 'idle',
-      }));
+        cardAnimation: 'sliding-to-center',
+        state: 'waiting',
+      });
 
-      // Slide to center
+      // Slide to center, then flip
       setTimeout(() => {
-        setGame((p) => ({
-          ...p,
-          cardAnimation: 'sliding-to-center',
-        }));
-
-        // Flip and reveal
-        setTimeout(() => {
-          setGame((p) => ({
-            ...p,
-            cardAnimation: 'flipping',
-          }));
-
-          setTimeout(() => {
-            setGame((p) => ({
+        setGame((p) => {
+          if (p.currentCard?.id === pickedCard.id) {
+            return {
               ...p,
-              cardAnimation: 'revealed',
-              state: 'card-revealed',
-            }));
-          }, 600);
-        }, 500);
-      }, 50);
+              cardAnimation: 'flipping',
+            };
+          }
+          return p;
+        });
+
+        // Reveal after flip
+        setTimeout(() => {
+          setGame((p) => {
+            if (p.currentCard?.id === pickedCard.id) {
+              return {
+                ...p,
+                cardAnimation: 'revealed',
+                state: 'card-revealed',
+              };
+            }
+            return p;
+          });
+        }, 600);
+      }, 500);
 
       return prev;
     });
@@ -72,42 +76,52 @@ export function useGame() {
     setGame((prev) => {
       if (!prev.currentCard) return prev;
 
+      const currentCardId = prev.currentCard.id;
+
       // Flip back first
-      setGame((p) => ({
-        ...p,
+      setGame({
+        ...prev,
         cardAnimation: 'flipping',
-      }));
+      });
 
       // Then slide to discard
       setTimeout(() => {
-        setGame((p) => ({
-          ...p,
-          cardAnimation: 'sliding-to-discard',
-        }));
+        setGame((p) => {
+          if (p.currentCard?.id === currentCardId) {
+            return {
+              ...p,
+              cardAnimation: 'sliding-to-discard',
+            };
+          }
+          return p;
+        });
 
         // After animation completes, move to discard and reset
         setTimeout(() => {
           setGame((p) => {
-            const newDiscardPile = [...p.discardPile, p.currentCard!];
+            if (p.currentCard?.id === currentCardId) {
+              const newDiscardPile = [...p.discardPile, p.currentCard!];
 
-            if (p.deck.length === 0) {
+              if (p.deck.length === 0) {
+                return {
+                  ...p,
+                  discardPile: newDiscardPile,
+                  state: 'ended',
+                  currentCard: null,
+                  cardAnimation: 'idle',
+                };
+              }
+
               return {
                 ...p,
                 discardPile: newDiscardPile,
-                state: 'ended',
+                currentPlayer: p.currentPlayer === 1 ? 2 : 1,
                 currentCard: null,
+                state: 'waiting',
                 cardAnimation: 'idle',
               };
             }
-
-            return {
-              ...p,
-              discardPile: newDiscardPile,
-              currentPlayer: p.currentPlayer === 1 ? 2 : 1,
-              currentCard: null,
-              state: 'waiting',
-              cardAnimation: 'idle',
-            };
+            return p;
           });
         }, 800);
       }, 600);

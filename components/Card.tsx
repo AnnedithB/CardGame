@@ -27,14 +27,14 @@ export default function Card({
   const getTransform = () => {
     switch (animationState) {
       case 'sliding-to-center':
-        return 'translateX(0) scale(1)';
       case 'flipping':
       case 'revealed':
         return 'translateX(0) scale(1)';
       case 'sliding-to-discard':
-        return 'translateX(calc(50vw - 20rem)) scale(0.6)';
+        return 'translateX(calc(50vw - 10rem)) scale(0.6)';
+      case 'idle':
       default:
-        return 'translateX(calc(-50vw + 20rem)) scale(0.6)';
+        return 'translateX(calc(-50vw + 10rem)) scale(0.6)';
     }
   };
 
