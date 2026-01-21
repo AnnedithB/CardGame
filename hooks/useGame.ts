@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Game, Player, Card } from '@/types/game';
 import { initialDeck } from '@/data/cards';
 
@@ -23,114 +23,125 @@ export function useGame() {
     player2Name: 'Player 2',
   }));
 
+  const timeoutRefs = useRef<NodeJS.Timeout[]>([]);
+
+  const clearTimeouts = useCallback(() => {
+    timeoutRefs.current.forEach(clearTimeout);
+    timeoutRefs.current = [];
+  }, []);
+
   const pickCard = useCallback(() => {
     setGame((prev) => {
       if (prev.deck.length === 0) {
         return { ...prev, state: 'ended' };
       }
 
+      if (prev.state !== 'waiting') {
+        return prev; // Prevent multiple clicks
+      }
+
+      clearTimeouts();
+
       const newDeck = [...prev.deck];
       const pickedCard = newDeck.pop()!;
 
-      // Show card immediately in center, then flip
-      setGame({
+      // Start with card at left position
+      const updatedState = {
         ...prev,
         deck: newDeck,
         currentCard: pickedCard,
-        cardAnimation: 'sliding-to-center',
-        state: 'waiting',
-      });
+        cardAnimation: 'idle' as const,
+        state: 'card-revealed' as const, // Lock state to prevent multiple clicks
+      };
 
-      // Start flip animation after a brief delay
-      setTimeout(() => {
-        setGame((p) => {
-          if (p.currentCard?.id === pickedCard.id) {
-            return {
-              ...p,
-              cardAnimation: 'flipping',
-            };
-          }
-          return p;
-        });
-      }, 300);
+      // Slide to center
+      const timeout1 = setTimeout(() => {
+        setGame((p) => ({
+          ...p,
+          cardAnimation: 'sliding-to-center',
+        }));
+      }, 50);
+      timeoutRefs.current.push(timeout1);
 
-      // Reveal after flip completes
-      setTimeout(() => {
-        setGame((p) => {
-          if (p.currentCard?.id === pickedCard.id) {
-            return {
-              ...p,
-              cardAnimation: 'revealed',
-              state: 'card-revealed',
-            };
-          }
-          return p;
-        });
-      }, 900);
+      // Flip and reveal
+      const timeout2 = setTimeout(() => {
+        setGame((p) => ({
+          ...p,
+          cardAnimation: 'flipping',
+        }));
 
-      return prev;
+        const timeout3 = setTimeout(() => {
+          setGame((p) => ({
+            ...p,
+            cardAnimation: 'revealed',
+          }));
+        }, 600);
+        timeoutRefs.current.push(timeout3);
+      }, 550);
+      timeoutRefs.current.push(timeout2);
+
+      return updatedState;
     });
-  }, []);
+  }, [clearTimeouts]);
 
   const continueAfterCard = useCallback(() => {
     setGame((prev) => {
-      if (!prev.currentCard) return prev;
+      if (!prev.currentCard || prev.cardAnimation !== 'revealed') {
+        return prev; // Only allow continue when card is revealed
+      }
 
-      const currentCardId = prev.currentCard.id;
+      clearTimeouts();
 
       // Flip back first
-      setGame({
-        ...prev,
+      setGame((p) => ({
+        ...p,
         cardAnimation: 'flipping',
-      });
+      }));
 
       // Then slide to discard
-      setTimeout(() => {
-        setGame((p) => {
-          if (p.currentCard?.id === currentCardId) {
-            return {
-              ...p,
-              cardAnimation: 'sliding-to-discard',
-            };
-          }
-          return p;
-        });
+      const timeout1 = setTimeout(() => {
+        setGame((p) => ({
+          ...p,
+          cardAnimation: 'sliding-to-discard',
+        }));
 
         // After animation completes, move to discard and reset
-        setTimeout(() => {
+        const timeout2 = setTimeout(() => {
           setGame((p) => {
-            if (p.currentCard?.id === currentCardId) {
-              const newDiscardPile = [...p.discardPile, p.currentCard!];
+            if (!p.currentCard) return p; // Safety check
 
-              if (p.deck.length === 0) {
-                return {
-                  ...p,
-                  discardPile: newDiscardPile,
-                  state: 'ended',
-                  currentCard: null,
-                  cardAnimation: 'idle',
-                };
-              }
+            const newDiscardPile = [...p.discardPile, p.currentCard];
 
+            if (p.deck.length === 0) {
               return {
                 ...p,
                 discardPile: newDiscardPile,
-                currentPlayer: p.currentPlayer === 1 ? 2 : 1,
+                state: 'ended',
                 currentCard: null,
-                state: 'waiting',
                 cardAnimation: 'idle',
               };
             }
-            return p;
+
+            return {
+              ...p,
+              discardPile: newDiscardPile,
+              currentPlayer: p.currentPlayer === 1 ? 2 : 1,
+              currentCard: null,
+              state: 'waiting',
+              cardAnimation: 'idle',
+            };
           });
         }, 800);
+        timeoutRefs.current.push(timeout2);
       }, 600);
+      timeoutRefs.current.push(timeout1);
 
-      return prev;
+      return prev; // Return unchanged, animations handle state updates
     });
-  }, []);
+  }, [clearTimeouts]);
 
   const resetGame = useCallback(() => {
+    clearTimeouts();
     setGame({
       currentPlayer: 1,
       deck: shuffleDeck(initialDeck),
@@ -141,7 +152,7 @@ export function useGame() {
       player1Name: 'Player 1',
       player2Name: 'Player 2',
     });
-  }, []);
+  }, [clearTimeouts]);
 
   return {
     game,

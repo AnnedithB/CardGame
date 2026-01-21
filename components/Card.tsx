@@ -23,37 +23,52 @@ export default function Card({
 }: CardProps) {
   const respondingPlayer = currentPlayer === 1 ? player2Name : player1Name;
 
-  // Calculate transform based on animation state
-  const getTransform = () => {
+  // Calculate transform and opacity based on animation state
+  const getAnimationStyles = () => {
+    const baseStyles: React.CSSProperties = {
+      perspective: '1000px',
+    };
+
     switch (animationState) {
+      case 'idle':
+        return {
+          ...baseStyles,
+          transform: 'translateX(-200px) scale(0.6)',
+          opacity: 1,
+        };
       case 'sliding-to-center':
+        return {
+          ...baseStyles,
+          transform: 'translateX(0) scale(1)',
+          opacity: 1,
+        };
       case 'flipping':
       case 'revealed':
-        return 'translateX(0) scale(1)';
+        return {
+          ...baseStyles,
+          transform: 'translateX(0) scale(1)',
+          opacity: 1,
+        };
       case 'sliding-to-discard':
-        return 'translateX(calc(50vw - 10rem)) scale(0.6)';
-      case 'idle':
+        return {
+          ...baseStyles,
+          transform: 'translateX(200px) scale(0.6)',
+          opacity: 0.3,
+        };
       default:
-        // Start from left, but make it visible
-        return 'translateX(0) scale(1)';
+        return {
+          ...baseStyles,
+          transform: 'translateX(0) scale(1)',
+          opacity: 1,
+        };
     }
-  };
-
-  const getOpacity = () => {
-    if (animationState === 'sliding-to-discard') return 0.3;
-    // Always show card when it exists (not idle)
-    return 1;
   };
 
   return (
     <div
       className="relative w-full max-w-[280px] mx-auto aspect-[3/4] cursor-pointer transition-all duration-500 ease-in-out"
       onClick={!isRevealed ? onReveal : undefined}
-      style={{ 
-        perspective: '1000px',
-        transform: getTransform(),
-        opacity: getOpacity(),
-      }}
+      style={getAnimationStyles()}
     >
       <div className="relative w-full h-full" style={{ transformStyle: 'preserve-3d' }}>
         {/* Card Back */}
