@@ -24,6 +24,7 @@ export default function Card({
   const respondingPlayer = currentPlayer === 1 ? player2Name : player1Name;
 
   // Calculate transform and opacity based on animation state
+  // Deck is rotated 90deg clockwise, Discard is rotated -90deg counter-clockwise
   const getAnimationStyles = () => {
     const baseStyles: React.CSSProperties = {
       perspective: '1000px',
@@ -31,34 +32,38 @@ export default function Card({
 
     switch (animationState) {
       case 'idle':
+        // Start: pulled from deck orientation (90deg clockwise), left position, smaller
         return {
           ...baseStyles,
-          transform: 'translateX(-200px) scale(0.6)',
+          transform: 'translateX(-250px) rotate(90deg) scale(0.6)',
           opacity: 1,
         };
       case 'sliding-to-center':
+        // Slide: rotate to normal (0deg), move to center, scale up
         return {
           ...baseStyles,
-          transform: 'translateX(0) scale(1)',
+          transform: 'translateX(0) rotate(0deg) scale(1)',
           opacity: 1,
         };
       case 'flipping':
       case 'revealed':
+        // Center: normal orientation, full size
         return {
           ...baseStyles,
-          transform: 'translateX(0) scale(1)',
+          transform: 'translateX(0) rotate(0deg) scale(1)',
           opacity: 1,
         };
       case 'sliding-to-discard':
+        // Discard: rotate to discard orientation (-90deg counter-clockwise), move right, scale down
         return {
           ...baseStyles,
-          transform: 'translateX(200px) scale(0.6)',
-          opacity: 0.3,
+          transform: 'translateX(250px) rotate(-90deg) scale(0.6)',
+          opacity: 0.4,
         };
       default:
         return {
           ...baseStyles,
-          transform: 'translateX(0) scale(1)',
+          transform: 'translateX(0) rotate(0deg) scale(1)',
           opacity: 1,
         };
     }
@@ -66,7 +71,7 @@ export default function Card({
 
   return (
     <div
-      className="relative w-full max-w-[280px] mx-auto aspect-[3/4] cursor-pointer transition-all duration-500 ease-in-out"
+      className="relative w-full max-w-[280px] mx-auto aspect-[3/4] cursor-pointer transition-all duration-700 ease-in-out"
       onClick={!isRevealed ? onReveal : undefined}
       style={getAnimationStyles()}
     >

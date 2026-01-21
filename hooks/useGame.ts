@@ -54,16 +54,16 @@ export function useGame() {
         state: 'card-revealed' as const, // Lock state to prevent multiple clicks
       };
 
-      // Slide to center
+      // Slide to center (with rotation from deck orientation)
       const timeout1 = setTimeout(() => {
         setGame((p) => ({
           ...p,
           cardAnimation: 'sliding-to-center',
         }));
-      }, 50);
+      }, 100);
       timeoutRefs.current.push(timeout1);
 
-      // Flip and reveal
+      // Flip and reveal (after card reaches center)
       const timeout2 = setTimeout(() => {
         setGame((p) => ({
           ...p,
@@ -77,7 +77,7 @@ export function useGame() {
           }));
         }, 600);
         timeoutRefs.current.push(timeout3);
-      }, 550);
+      }, 800); // Wait for slide animation to complete
       timeoutRefs.current.push(timeout2);
 
       return updatedState;
@@ -98,7 +98,7 @@ export function useGame() {
         cardAnimation: 'flipping',
       }));
 
-      // Then slide to discard
+      // Then slide to discard (with rotation to discard orientation)
       const timeout1 = setTimeout(() => {
         setGame((p) => ({
           ...p,
@@ -131,9 +131,9 @@ export function useGame() {
               cardAnimation: 'idle',
             };
           });
-        }, 800);
+        }, 900); // Wait for slide animation to complete
         timeoutRefs.current.push(timeout2);
-      }, 600);
+      }, 600); // Wait for flip animation to complete
       timeoutRefs.current.push(timeout1);
 
       return prev; // Return unchanged, animations handle state updates
